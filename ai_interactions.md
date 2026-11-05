@@ -1,23 +1,24 @@
-# AI Interactions Log
+# AI Interactions and Workflow Trace
 
-## Request and scope
-The user asked Codex to complete and submit Weeks 7 and 8 and check every required item. Codex read the live course instructions and rubric, cloned the official starter, implemented the changes, and ran the logged commands. This log does not fabricate separate conversations, human manual corrections, or model comparisons.
+## User task
+The user requested completion and submission of Weeks 7 and 8 with every required item covered. Codex read the live course instructions and rubric. This log records work performed by the assistant; it does not invent human actions or extra model conversations.
 
-## Agentic workflow
-Task: complete the CLI-first content-based music simulation with an expanded catalog, explained ranking and behavior tests.
-Files changed: src/recommender.py, src/main.py, src/__init__.py, data/songs.csv, tests/test_functional.py, pytest.ini, requirements.txt, README.md, model_card.md, evidence/*, diagrams/architecture.mmd.
-Result: all three starter TODO functions and both OOP methods work; the module import was fixed; 20 rows load; 24 tests pass.
-Validation was automated by Codex. No independent human manual code verification is claimed.
+## Implementation workflow
+Base: Project 3 Music Recommender Simulation. Added src/assistant.py, src/app.py, evaluate.py, tests/test_assistant.py, architecture and evidence. The original catalog, scorer, object interfaces, baseline CLI and tests remain.
+Accepted design: explicit catalog coverage checks and independently recomputed output facts.
+Revised alternative: explicit JSON inputs instead of free-text/LLM parsing; no model API or secret is required.
+Correction: pytest reserves request as a parameter name, so the parametrized input was renamed payload after a collection failure. All 42 tests subsequently passed. Support filtering was also changed to use full precision before display rounding.
 
-## Design pattern
-A small Strategy mapping (MODES) selects genre-first, mood-first, or energy-first weights. The scorer is shared instead of duplicating three implementations. The CLI exposes --mode; the saved conflicting-profile experiment demonstrates that switching it changes the ranking.
+## Plan / Act / Check decision chain
+The implemented chain validates preferences, checks represented labels, records a scoring plan, ranks candidates, independently audits catalog IDs and numeric explanations, filters support, then returns results or refuses. These are observable action summaries, not a claim to expose a model's internal reasoning.
 
-## Diversity and formatting
-The assistant implemented greedy artist-penalty selection and a plain ASCII table with exact reason strings. Output with and without penalty is saved in the README and evidence. This is artist variety, not a demonstrated solution to demographic bias.
+Committed traces and outputs:
+- [Happy pop trace](evidence/trace-1.json)
+- [Chill lofi trace](evidence/trace-2.json)
+- [Intense rock trace](evidence/trace-3.json)
+- [Unknown genre refusal trace](evidence/trace-4.json)
+- [All evaluation inputs and results](evidence/evaluation.json)
+- [Baseline versus extended output](evidence/before-after.json)
+- [42 passing tests](evidence/tests.txt)
 
-## Decisions
-Accepted: explain the contribution of each feature and use absolute energy distance.
-Revised alternative: keep the application standard-library and CLI-only instead of adding a web UI or data-frame layer. This removes unused starter dependencies and makes reproduction easier.
-
-## Evidence
-See evidence/run-1.txt through evidence/run-5.txt for the actual commands, recommendations, weight shift, diversity run, and passing test output.
+Each trace records validate, plan, rank, audit, filter, or refusal steps and their outcomes. The evaluation script replays every case and saves the actual JSON. No fake model confidence or human review results are reported.
