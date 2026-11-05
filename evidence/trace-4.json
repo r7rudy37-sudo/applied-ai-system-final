@@ -1,0 +1,15 @@
+{
+  "status": "refused",
+  "message": "No catalog evidence for genre: metal",
+  "recommendations": [],
+  "trace": [
+    {
+      "step": "validate",
+      "result": "valid explicit preferences"
+    },
+    {
+      "step": "refuse",
+      "result": "No catalog evidence for genre: metal"
+    }
+  ]
+}
