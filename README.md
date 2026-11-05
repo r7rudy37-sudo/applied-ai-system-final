@@ -1,178 +1,314 @@
-# VibeFinder: Music Recommender Simulation
+# VibeGuide: Reliable Music Recommendations
 
-A CLI-first, content-based recommendation simulator for AI110 Project 3. It loads 20 synthetic songs, compares explicit taste profiles with song features, and explains each score. It is a transparent rule-based simulation, not a trained model or a connection to Spotify.
+AI110 Applied AI System final project. VibeGuide extends **Project 3: Music Recommender Simulation (VibeFinder)**. The original project loaded 20 synthetic song records and used genre, mood, and energy weights to produce explained top-K recommendations. It supported three scoring modes and an optional artist diversity penalty, but it would return a list even when a requested genre was absent from the catalog.
 
-## How The System Works
+Original project: https://github.com/r7rudy37-sudo/ai110-module3show-musicrecommendersimulation-starter
 
-Real recommendation systems combine item information with user feedback. Content-based filtering compares item attributes with a user's preferences. Collaborative filtering uses patterns across users and items; it can surface something a similar listener enjoyed. Inputs can include likes, skips, listening history, playlists, and song properties. Preferences describe what a listener wants; the scoring rule evaluates one song; ranking orders the whole candidate list. This simulator uses explicit preferences and hand-assigned attributes, not other users' behavior.
+## What Changed and Why
 
-Sources: [Google: content-based filtering](https://developers.google.com/machine-learning/recommendation/content-based/basics), [Google: collaborative filtering](https://developers.google.com/machine-learning/recommendation/collaborative/basics).
+The new feature is an **integrated reliability mechanism**, one of the permitted final-project AI features. Every request now goes through explicit input validation, catalog-label coverage checks, a planning and ranking step, an output audit, and a minimum-support filter. Unsupported requests produce a refusal with no recommendations. The evaluation harness is an additional check, not a substitute for guardrails in the main application.
 
-`Song` stores ID, title, artist, genre, mood, energy, tempo, valence, danceability, and acousticness. The CSV loader returns dictionaries with numeric fields converted. The starter `Song`, `UserProfile`, and `Recommender` interfaces also work; both interfaces share the same scorer. `UserProfile` records favorite genre, favorite mood, target energy, and an acoustic preference. The CLI uses genre, mood, and energy dictionaries.
+This is a deterministic content-based AI simulation. It does not call an LLM, train a model, use retrieval-augmented generation, or claim to understand a listener's actual emotions. All recommendations and explanations come from the local synthetic catalog and explicit scoring rules.
 
-### Algorithm Recipe
+## Architecture
 
-- Genre-first: genre match +2, mood match +1, energy similarity +1 x (1 - absolute energy gap).
-- Mood-first: genre +1, mood +2, energy similarity +1.
-- Energy-first: genre +1, mood +1, energy similarity +2. This halves genre and doubles energy relative to the baseline.
-- If an acoustic preference is supplied through the OOP interface, add up to 0.25 for acousticness (or its complement).
-- Rank scores highest first; break ties by song ID. Every contribution is included in the explanation. The input catalog is not changed.
-- Optional greedy diversity re-ranking subtracts a configurable penalty for each previously selected song by that artist. Adjusted scores can be negative and selection follows the current penalty, rather than a single global sort.
-
-Tempo, valence, and danceability are loaded and documented, but do not contribute to this baseline scorer. Numeric inputs must be finite; unit-scale features must be in [0, 1].
+The Mermaid source is in [diagrams/architecture.mmd](diagrams/architecture.mmd).
 
 ```mermaid
-flowchart LR
-    CSV[20 synthetic song records] --> Load[Validate and convert types]
-    User[Explicit taste profile] --> Score[Score every song and record reasons]
-    Load --> Score
-    Score --> Rank[Sort or greedy artist-diversity re-rank]
-    Rank --> CLI[Top K table with explanations]
-    Tests[Unit and behavior tests] -. verify .-> Score
+flowchart TD
+  U[Human provides genre mood energy] --> CLI[src.app JSON CLI]
+  CLI --> V[Validate request and allowed fields]
+  CSV[20 synthetic songs] --> L[Load validate catalog]
+  L --> C[Check requested labels are represented]
+  V --> C
+  C --> R[Plan and rank with original scorer]
+  R --> A[Audit catalog IDs scores penalties explanations]
+  A --> S[Filter minimum evidence support]
+  S --> O[Verified recommendations and decision trace]
+  V --> F[Refuse unsupported request]
+  C --> F
+  A --> F
+  S --> F
+  H[Human reviews explanations and trade-offs] -. checks .-> O
+  E[evaluate.py and fault-injection tests] -. verify .-> V
+  E -. verify .-> A
 ```
 
-## Setup and Run
+Data flow: the CLI parses one JSON object; the assistant checks it against the validated catalog; the original recommender scores every track; the audit independently recomputes scores and checks original catalog records; only supported records are released. Humans can inspect the exact reasons and choose whether they want the songs. Evaluation checks the same end-to-end assistant.
 
-Python 3.9+ is sufficient. The application uses the standard library; pytest is only needed for tests.
+## Setup, Run, and Test
+
+Python 3.9+ is supported. Runtime uses only the standard library. No API key, network access, payment, or account is needed to run it.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-python -m src.main --profile all
-python -m src.main --profile pop --mode mood-first --diversity 2
+python -m src.app --request '{"genre":"pop","mood":"happy","energy":0.8}'
+python evaluate.py
 python -m pytest -q
 ```
 
-On Windows activate with `.venv\Scripts\activate`. Run commands from the repository root. No API key, account, network request, or paid service is required.
+On Windows activate with `.venv\Scripts\activate`. Run commands from the repo root. The original baseline is still available with `python -m src.main --profile all`. `--catalog PATH` selects a local CSV with the same schema. `--trace-file evidence/my-run.json` saves one full response locally. The app exits with code 1 for malformed JSON or catalog/configuration errors; a deliberate refusal is a successful, handled request and exits with code 0.
 
-## Sample Recommendation Output
+## End-to-End Examples: Actual Input and Output
 
-Actual command output for three distinct profiles (also committed in `evidence/run-1.txt`):
-
-```text
-$ python3 -m src.main --profile all
-Loaded songs: 20 | mode: genre-first
-
-Profile: pop {'genre': 'pop', 'mood': 'happy', 'energy': 0.8}
-#   Title                     Artist              Score
-----------------------------------------------------------
-1   Weekend Skyline           Neon Echo           3.99
-    Because: genre match (+2.00); mood match (+1.00); energy gap 0.01 (+0.99)
-2   Sunrise City              Neon Echo           3.98
-    Because: genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98)
-3   Gym Hero                  Max Pulse           2.87
-    Because: genre match (+2.00); energy gap 0.13 (+0.87)
-4   Rooftop Lights            Indigo Parade       1.96
-    Because: mood match (+1.00); energy gap 0.04 (+0.96)
-5   Desert Festival           Sol Dorado          1.94
-    Because: mood match (+1.00); energy gap 0.06 (+0.94)
-
-Profile: lofi {'genre': 'lofi', 'mood': 'chill', 'energy': 0.35}
-#   Title                     Artist              Score
-----------------------------------------------------------
-1   Library Rain              Paper Lanterns      4.00
-    Because: genre match (+2.00); mood match (+1.00); energy gap 0.00 (+1.00)
-2   Soft Desk Lamp            LoRoom              3.98
-    Because: genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98)
-3   Midnight Coding           LoRoom              3.93
-    Because: genre match (+2.00); mood match (+1.00); energy gap 0.07 (+0.93)
-4   Focus Flow                LoRoom              2.95
-    Because: genre match (+2.00); energy gap 0.05 (+0.95)
-5   Spacewalk Thoughts        Orbit Bloom         1.93
-    Because: mood match (+1.00); energy gap 0.07 (+0.93)
-
-Profile: rock {'genre': 'rock', 'mood': 'intense', 'energy': 0.9}
-#   Title                     Artist              Score
-----------------------------------------------------------
-1   Storm Runner              Voltline            3.99
-    Because: genre match (+2.00); mood match (+1.00); energy gap 0.01 (+0.99)
-2   After the Storm           Voltline            3.98
-    Because: genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98)
-3   Gym Hero                  Max Pulse           1.97
-    Because: mood match (+1.00); energy gap 0.03 (+0.97)
-4   Electric Horizon          Pulse Atlas         1.94
-    Because: mood match (+1.00); energy gap 0.06 (+0.94)
-5   Desert Festival           Sol Dorado          0.96
-    Because: energy gap 0.04 (+0.96)
-```
-
-The pop and rock profiles favor higher-energy tracks, but their matching genres put different songs first. Lofi versus pop shifts the top result to lower-energy chill music. Lofi versus rock changes both genre and target energy, producing different first choices. These are checks against the chosen rules, not measured listener satisfaction.
-
-## Experiments You Tried
-
-The conflicting profile requests ambient, sad, high-energy music. With genre-first, the first result is Spacewalk Thoughts (2.33). After halving genre weight and doubling energy weight, it becomes Electric Horizon (1.98). The altered result is different, not evidence of being more accurate for a real person.
+### 1. Happy pop
 
 ```text
-$ python3 -m src.main --profile conflicting --mode genre-first
-Loaded songs: 20 | mode: genre-first
-
-Profile: conflicting {'genre': 'ambient', 'mood': 'sad', 'energy': 0.95}
-#   Title                     Artist              Score
-----------------------------------------------------------
-1   Spacewalk Thoughts        Orbit Bloom         2.33
-    Because: genre match (+2.00); energy gap 0.67 (+0.33)
-2   Blue Window               Velvet Current      1.43
-    Because: mood match (+1.00); energy gap 0.57 (+0.43)
-3   Electric Horizon          Pulse Atlas         0.99
-    Because: energy gap 0.01 (+0.99)
-4   Gym Hero                  Max Pulse           0.98
-    Because: energy gap 0.02 (+0.98)
-5   Storm Runner              Voltline            0.96
-    Because: energy gap 0.04 (+0.96)
-$ python3 -m src.main --profile conflicting --mode energy-first
-Loaded songs: 20 | mode: energy-first
-
-Profile: conflicting {'genre': 'ambient', 'mood': 'sad', 'energy': 0.95}
-#   Title                     Artist              Score
-----------------------------------------------------------
-1   Electric Horizon          Pulse Atlas         1.98
-    Because: energy gap 0.01 (+1.98)
-2   Gym Hero                  Max Pulse           1.96
-    Because: energy gap 0.02 (+1.96)
-3   Storm Runner              Voltline            1.92
-    Because: energy gap 0.04 (+1.92)
-4   Blue Window               Velvet Current      1.86
-    Because: mood match (+1.00); energy gap 0.57 (+0.86)
-5   After the Storm           Voltline            1.86
-    Because: energy gap 0.07 (+1.86)
+$ python -m src.app --request '{"genre": "pop", "mood": "happy", "energy": 0.8}'
+{
+  "status": "ok",
+  "message": "Rule-based recommendations from the synthetic catalog; support is not a probability of enjoyment.",
+  "recommendations": [
+    {
+      "id": 17,
+      "title": "Weekend Skyline",
+      "artist": "Neon Echo",
+      "genre": "pop",
+      "mood": "happy",
+      "score": 3.99,
+      "base_score": 3.99,
+      "support": 0.9975,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.01 (+0.99)"
+    },
+    {
+      "id": 1,
+      "title": "Sunrise City",
+      "artist": "Neon Echo",
+      "genre": "pop",
+      "mood": "happy",
+      "score": 3.18,
+      "base_score": 3.98,
+      "support": 0.995,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98); repeated artist (-0.80)"
+    },
+    {
+      "id": 5,
+      "title": "Gym Hero",
+      "artist": "Max Pulse",
+      "genre": "pop",
+      "mood": "intense",
+      "score": 2.87,
+      "base_score": 2.87,
+      "support": 0.7175,
+      "explanation": "genre match (+2.00); energy gap 0.13 (+0.87)"
+    }
+  ],
+  "trace": [
+    {
+      "step": "validate",
+      "result": "valid explicit preferences"
+    },
+    {
+      "step": "plan",
+      "result": "score 20 catalog records using genre-first"
+    },
+    {
+      "step": "rank",
+      "result": "20 scored candidates; artist penalty 0.8"
+    },
+    {
+      "step": "audit",
+      "result": "IDs, records, scores, penalties, and explanations verified"
+    },
+    {
+      "step": "filter",
+      "result": "3 results meet support threshold 0.7"
+    }
+  ]
+}
 ```
 
-Without a diversity penalty, Neon Echo occupies the first two pop results. With penalty 2, a different artist moves into the second position. This improves artist variety at a relevance trade-off; it does not establish demographic fairness.
+### 2. Chill lofi
 
 ```text
-$ python3 -m src.main --profile pop --diversity 2
-Loaded songs: 20 | mode: genre-first
-
-Profile: pop {'genre': 'pop', 'mood': 'happy', 'energy': 0.8}
-#   Title                     Artist              Score
-----------------------------------------------------------
-1   Weekend Skyline           Neon Echo           3.99
-    Because: genre match (+2.00); mood match (+1.00); energy gap 0.01 (+0.99)
-2   Gym Hero                  Max Pulse           2.87
-    Because: genre match (+2.00); energy gap 0.13 (+0.87)
-3   Sunrise City              Neon Echo           1.98
-    Because: genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98); repeated artist (-2.00)
-4   Rooftop Lights            Indigo Parade       1.96
-    Because: mood match (+1.00); energy gap 0.04 (+0.96)
-5   Desert Festival           Sol Dorado          1.94
-    Because: mood match (+1.00); energy gap 0.06 (+0.94)
+$ python -m src.app --request '{"genre": "lofi", "mood": "chill", "energy": 0.35}'
+{
+  "status": "ok",
+  "message": "Rule-based recommendations from the synthetic catalog; support is not a probability of enjoyment.",
+  "recommendations": [
+    {
+      "id": 4,
+      "title": "Library Rain",
+      "artist": "Paper Lanterns",
+      "genre": "lofi",
+      "mood": "chill",
+      "score": 4.0,
+      "base_score": 4.0,
+      "support": 1.0,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.00 (+1.00)"
+    },
+    {
+      "id": 16,
+      "title": "Soft Desk Lamp",
+      "artist": "LoRoom",
+      "genre": "lofi",
+      "mood": "chill",
+      "score": 3.98,
+      "base_score": 3.98,
+      "support": 0.995,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98)"
+    },
+    {
+      "id": 2,
+      "title": "Midnight Coding",
+      "artist": "LoRoom",
+      "genre": "lofi",
+      "mood": "chill",
+      "score": 3.13,
+      "base_score": 3.93,
+      "support": 0.9824999999999999,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.07 (+0.93); repeated artist (-0.80)"
+    }
+  ],
+  "trace": [
+    {
+      "step": "validate",
+      "result": "valid explicit preferences"
+    },
+    {
+      "step": "plan",
+      "result": "score 20 catalog records using genre-first"
+    },
+    {
+      "step": "rank",
+      "result": "20 scored candidates; artist penalty 0.8"
+    },
+    {
+      "step": "audit",
+      "result": "IDs, records, scores, penalties, and explanations verified"
+    },
+    {
+      "step": "filter",
+      "result": "3 results meet support threshold 0.7"
+    }
+  ]
+}
 ```
 
-## Tests and Validation
-
-The two starter tests are retained. Added tests check exact scoring, energy proximity, three profiles, non-mutation, mode differences, diversity, case normalization, empty catalogs, invalid numeric inputs, invalid K, and missing CSV columns.
+### 3. Intense rock
 
 ```text
-$ .venv/bin/python -m pytest -q
-........................                                                 [100%]
-24 passed in 0.03s
+$ python -m src.app --request '{"genre": "rock", "mood": "intense", "energy": 0.9}'
+{
+  "status": "ok",
+  "message": "Rule-based recommendations from the synthetic catalog; support is not a probability of enjoyment.",
+  "recommendations": [
+    {
+      "id": 3,
+      "title": "Storm Runner",
+      "artist": "Voltline",
+      "genre": "rock",
+      "mood": "intense",
+      "score": 3.99,
+      "base_score": 3.99,
+      "support": 0.9975,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.01 (+0.99)"
+    },
+    {
+      "id": 15,
+      "title": "After the Storm",
+      "artist": "Voltline",
+      "genre": "rock",
+      "mood": "intense",
+      "score": 3.18,
+      "base_score": 3.98,
+      "support": 0.995,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98); repeated artist (-0.80)"
+    }
+  ],
+  "trace": [
+    {
+      "step": "validate",
+      "result": "valid explicit preferences"
+    },
+    {
+      "step": "plan",
+      "result": "score 20 catalog records using genre-first"
+    },
+    {
+      "step": "rank",
+      "result": "20 scored candidates; artist penalty 0.8"
+    },
+    {
+      "step": "audit",
+      "result": "IDs, records, scores, penalties, and explanations verified"
+    },
+    {
+      "step": "filter",
+      "result": "2 results meet support threshold 0.7"
+    }
+  ]
+}
 ```
 
-## Limitations and Risks
+Rock returns two supported tracks instead of padding the list with unrelated music to reach three.
 
-The catalog is small and synthetic. Song attributes are invented examples, not measurements of actual recordings. A strong genre weight can create a filter bubble; exact labels miss related genres such as pop and indie pop. There are no lyrics, listening-history signals, language preferences, or popularity estimates. Scores are relevance points, not probabilities or confidence in musical enjoyment.
+## Guardrail Demonstration and Before/After
 
-## AI-Assisted Engineering Reflection
+```text
+$ python -m src.app --request '{"genre": "metal", "mood": "happy", "energy": 0.8}'
+{
+  "status": "refused",
+  "message": "No catalog evidence for genre: metal",
+  "recommendations": [],
+  "trace": [
+    {
+      "step": "validate",
+      "result": "valid explicit preferences"
+    },
+    {
+      "step": "refuse",
+      "result": "No catalog evidence for genre: metal"
+    }
+  ]
+}
+```
 
-Codex implemented the code and ran the saved commands in this repository in response to the coursework request. The important lesson illustrated here is that understandable weights can already produce personalized-looking rankings, but that does not prove taste prediction. The implementation uses energy proximity instead of simply rewarding high energy, and keeps the CSV order unchanged by sorting a separate list. Suggested complexity such as a web UI and extra dependencies was omitted to keep the CLI easy to explain and reproduce. No human listening study or independent manual code review is claimed. See [model_card.md](model_card.md) and [ai_interactions.md](ai_interactions.md).
+Before: the Project 3 scorer returned Weekend Skyline, Sunrise City, Rooftop Lights for a request for metal, even though the catalog contains no metal tracks. After: VibeGuide checks label coverage and refuses that request with an empty result list. [evidence/before-after.json](evidence/before-after.json) contains the same input and both real outputs. This prevents an unsupported list, rather than merely attaching a warning to it.
+
+## Reliability and Evaluation
+
+A support score is the original weighted score divided by the maximum possible score for the selected mode. It is **not a calibrated probability, model confidence, or predicted enjoyment**. The default threshold is 0.70. Artist penalties affect selection priority but do not change the evidence-support calculation. Support is filtered at full precision; display values are rounded only where appropriate.
+
+The output audit checks that every song ID exists, no ID is repeated, every song record equals the source catalog, the score equals a fresh calculation with the proper artist penalty, and the explanation exactly matches the scoring contributions. If any check fails, the whole request refuses to release results. Tests inject an invented ID, changed title, incorrect score, false explanation, and duplicate song to verify that the audit fails closed.
+
+Actual predefined evaluation:
+
+```text
+PASS | happy pop | ok | 3 recommendations
+PASS | chill lofi | ok | 3 recommendations
+PASS | intense rock | ok | 2 recommendations
+PASS | missing inputs | refused | 0 recommendations
+PASS | unknown genre | refused | 0 recommendations
+PASS | weak combined match | refused | 0 recommendations
+PASS | invalid energy | refused | 0 recommendations
+PASS | unknown field | refused | 0 recommendations
+Summary: 8/8 passed; deterministic replay checked for every case.
+```
+
+The eight cases test three genres, missing inputs, unknown genre, an unsupported combination, an invalid energy value, and an unexpected field. Each case is replayed to check deterministic behavior. Structured input, expected behavior, observed output, and pass/fail values are committed in [evidence/evaluation.json](evidence/evaluation.json).
+
+Actual automated tests:
+
+```text
+..........................................                               [100%]
+42 passed in 0.08s
+```
+
+These results establish the documented behavior on this small test set; they do not establish real-world recommendation accuracy.
+
+## Design Decisions
+
+- Keep the original scorer and its explanations rather than introduce a second ranking implementation.
+- Require genre, mood, and energy explicitly instead of silently guessing intent from free text.
+- Refuse unknown labels and low-support combinations rather than always fill the requested K slots.
+- Recompute output facts before release; do not trust an explanation merely because it sounds plausible.
+- Use local JSON decision traces and no external telemetry. No private user history is stored by default.
+
+## Reflection, Ethics, and Portfolio
+
+The complete graded reflection is in [model_card.md](model_card.md), including AI collaboration, one accepted design and one revised alternative, limitations, misuse, and future improvements. [ai_interactions.md](ai_interactions.md) links the committed action traces. [presentation.md](presentation.md) provides a timed six-minute presentation and demo outline.
+
+This portfolio project demonstrates an ability to evolve an explainable baseline into a more responsible workflow: identify when inputs are unsupported, make intermediate decisions inspectable, test failures deliberately, and document the practical limits of passing tests. It remains a classroom prototype; a production system would need consented data, human preference evaluation, and stronger catalog coverage.
