@@ -1,0 +1,62 @@
+$ python -m src.app --request '{"genre": "lofi", "mood": "chill", "energy": 0.35}'
+{
+  "status": "ok",
+  "message": "Rule-based recommendations from the synthetic catalog; support is not a probability of enjoyment.",
+  "recommendations": [
+    {
+      "id": 4,
+      "title": "Library Rain",
+      "artist": "Paper Lanterns",
+      "genre": "lofi",
+      "mood": "chill",
+      "score": 4.0,
+      "base_score": 4.0,
+      "support": 1.0,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.00 (+1.00)"
+    },
+    {
+      "id": 16,
+      "title": "Soft Desk Lamp",
+      "artist": "LoRoom",
+      "genre": "lofi",
+      "mood": "chill",
+      "score": 3.98,
+      "base_score": 3.98,
+      "support": 0.995,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98)"
+    },
+    {
+      "id": 2,
+      "title": "Midnight Coding",
+      "artist": "LoRoom",
+      "genre": "lofi",
+      "mood": "chill",
+      "score": 3.13,
+      "base_score": 3.93,
+      "support": 0.9824999999999999,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.07 (+0.93); repeated artist (-0.80)"
+    }
+  ],
+  "trace": [
+    {
+      "step": "validate",
+      "result": "valid explicit preferences"
+    },
+    {
+      "step": "plan",
+      "result": "score 20 catalog records using genre-first"
+    },
+    {
+      "step": "rank",
+      "result": "20 scored candidates; artist penalty 0.8"
+    },
+    {
+      "step": "audit",
+      "result": "IDs, records, scores, penalties, and explanations verified"
+    },
+    {
+      "step": "filter",
+      "result": "3 results meet support threshold 0.7"
+    }
+  ]
+}
