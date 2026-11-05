@@ -1,8 +1,17 @@
-flowchart LR
-  Catalog[20 synthetic CSV records] --> Loader[Validate and convert types]
-  Preferences[Explicit preferences] --> Scorer[Weighted scorer and reasons]
-  Loader --> Scorer
-  Mode[Ranking strategy] --> Scorer
-  Scorer --> Rank[Sort or greedy artist penalty]
-  Rank --> Output[Top K table]
-  Tests[24 behavior tests] -. verify .-> Scorer
+flowchart TD
+  Human[Human explicit preferences] --> CLI[src.app JSON CLI]
+  CLI --> Validate[Validate fields types and bounds]
+  CSV[20 synthetic catalog records] --> Loader[Validate catalog]
+  Loader --> Coverage[Check requested labels]
+  Validate --> Coverage
+  Coverage --> Plan[Record scoring plan]
+  Plan --> Rank[Original weighted ranker with artist penalty]
+  Rank --> Audit[Audit IDs records scores and explanations]
+  Audit --> Filter[Minimum-support filter]
+  Filter --> Output[Supported results and decision trace]
+  Validate --> Refuse[Refuse without results]
+  Coverage --> Refuse
+  Audit --> Refuse
+  Filter --> Refuse
+  Reviewer[Human reviews suitability] -. checks .-> Output
+  Evaluator[evaluate.py and 42 automated tests] -. verifies .-> Audit
