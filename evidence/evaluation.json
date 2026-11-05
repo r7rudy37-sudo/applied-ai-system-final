@@ -1,0 +1,326 @@
+[
+  {
+    "case": "happy pop",
+    "request": {
+      "genre": "pop",
+      "mood": "happy",
+      "energy": 0.8
+    },
+    "expected_status": "ok",
+    "passed": true,
+    "result": {
+      "status": "ok",
+      "message": "Rule-based recommendations from the synthetic catalog; support is not a probability of enjoyment.",
+      "recommendations": [
+        {
+          "id": 17,
+          "title": "Weekend Skyline",
+          "artist": "Neon Echo",
+          "genre": "pop",
+          "mood": "happy",
+          "score": 3.99,
+          "base_score": 3.99,
+          "support": 0.9975,
+          "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.01 (+0.99)"
+        },
+        {
+          "id": 1,
+          "title": "Sunrise City",
+          "artist": "Neon Echo",
+          "genre": "pop",
+          "mood": "happy",
+          "score": 3.18,
+          "base_score": 3.98,
+          "support": 0.995,
+          "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98); repeated artist (-0.80)"
+        },
+        {
+          "id": 5,
+          "title": "Gym Hero",
+          "artist": "Max Pulse",
+          "genre": "pop",
+          "mood": "intense",
+          "score": 2.87,
+          "base_score": 2.87,
+          "support": 0.7175,
+          "explanation": "genre match (+2.00); energy gap 0.13 (+0.87)"
+        }
+      ],
+      "trace": [
+        {
+          "step": "validate",
+          "result": "valid explicit preferences"
+        },
+        {
+          "step": "plan",
+          "result": "score 20 catalog records using genre-first"
+        },
+        {
+          "step": "rank",
+          "result": "20 scored candidates; artist penalty 0.8"
+        },
+        {
+          "step": "audit",
+          "result": "IDs, records, scores, penalties, and explanations verified"
+        },
+        {
+          "step": "filter",
+          "result": "3 results meet support threshold 0.7"
+        }
+      ]
+    }
+  },
+  {
+    "case": "chill lofi",
+    "request": {
+      "genre": "lofi",
+      "mood": "chill",
+      "energy": 0.35
+    },
+    "expected_status": "ok",
+    "passed": true,
+    "result": {
+      "status": "ok",
+      "message": "Rule-based recommendations from the synthetic catalog; support is not a probability of enjoyment.",
+      "recommendations": [
+        {
+          "id": 4,
+          "title": "Library Rain",
+          "artist": "Paper Lanterns",
+          "genre": "lofi",
+          "mood": "chill",
+          "score": 4.0,
+          "base_score": 4.0,
+          "support": 1.0,
+          "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.00 (+1.00)"
+        },
+        {
+          "id": 16,
+          "title": "Soft Desk Lamp",
+          "artist": "LoRoom",
+          "genre": "lofi",
+          "mood": "chill",
+          "score": 3.98,
+          "base_score": 3.98,
+          "support": 0.995,
+          "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98)"
+        },
+        {
+          "id": 2,
+          "title": "Midnight Coding",
+          "artist": "LoRoom",
+          "genre": "lofi",
+          "mood": "chill",
+          "score": 3.13,
+          "base_score": 3.93,
+          "support": 0.9824999999999999,
+          "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.07 (+0.93); repeated artist (-0.80)"
+        }
+      ],
+      "trace": [
+        {
+          "step": "validate",
+          "result": "valid explicit preferences"
+        },
+        {
+          "step": "plan",
+          "result": "score 20 catalog records using genre-first"
+        },
+        {
+          "step": "rank",
+          "result": "20 scored candidates; artist penalty 0.8"
+        },
+        {
+          "step": "audit",
+          "result": "IDs, records, scores, penalties, and explanations verified"
+        },
+        {
+          "step": "filter",
+          "result": "3 results meet support threshold 0.7"
+        }
+      ]
+    }
+  },
+  {
+    "case": "intense rock",
+    "request": {
+      "genre": "rock",
+      "mood": "intense",
+      "energy": 0.9
+    },
+    "expected_status": "ok",
+    "passed": true,
+    "result": {
+      "status": "ok",
+      "message": "Rule-based recommendations from the synthetic catalog; support is not a probability of enjoyment.",
+      "recommendations": [
+        {
+          "id": 3,
+          "title": "Storm Runner",
+          "artist": "Voltline",
+          "genre": "rock",
+          "mood": "intense",
+          "score": 3.99,
+          "base_score": 3.99,
+          "support": 0.9975,
+          "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.01 (+0.99)"
+        },
+        {
+          "id": 15,
+          "title": "After the Storm",
+          "artist": "Voltline",
+          "genre": "rock",
+          "mood": "intense",
+          "score": 3.18,
+          "base_score": 3.98,
+          "support": 0.995,
+          "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98); repeated artist (-0.80)"
+        }
+      ],
+      "trace": [
+        {
+          "step": "validate",
+          "result": "valid explicit preferences"
+        },
+        {
+          "step": "plan",
+          "result": "score 20 catalog records using genre-first"
+        },
+        {
+          "step": "rank",
+          "result": "20 scored candidates; artist penalty 0.8"
+        },
+        {
+          "step": "audit",
+          "result": "IDs, records, scores, penalties, and explanations verified"
+        },
+        {
+          "step": "filter",
+          "result": "2 results meet support threshold 0.7"
+        }
+      ]
+    }
+  },
+  {
+    "case": "missing inputs",
+    "request": {},
+    "expected_status": "refused",
+    "passed": true,
+    "result": {
+      "status": "refused",
+      "message": "Please provide genre, mood, and energy explicitly.",
+      "recommendations": [],
+      "trace": [
+        {
+          "step": "refuse",
+          "result": "Please provide genre, mood, and energy explicitly."
+        }
+      ]
+    }
+  },
+  {
+    "case": "unknown genre",
+    "request": {
+      "genre": "metal",
+      "mood": "happy",
+      "energy": 0.8
+    },
+    "expected_status": "refused",
+    "passed": true,
+    "result": {
+      "status": "refused",
+      "message": "No catalog evidence for genre: metal",
+      "recommendations": [],
+      "trace": [
+        {
+          "step": "validate",
+          "result": "valid explicit preferences"
+        },
+        {
+          "step": "refuse",
+          "result": "No catalog evidence for genre: metal"
+        }
+      ]
+    }
+  },
+  {
+    "case": "weak combined match",
+    "request": {
+      "genre": "ambient",
+      "mood": "sad",
+      "energy": 0.95
+    },
+    "expected_status": "refused",
+    "passed": true,
+    "result": {
+      "status": "refused",
+      "message": "The catalog does not contain a sufficiently supported match. Try different preferences.",
+      "recommendations": [],
+      "trace": [
+        {
+          "step": "validate",
+          "result": "valid explicit preferences"
+        },
+        {
+          "step": "plan",
+          "result": "score 20 catalog records using genre-first"
+        },
+        {
+          "step": "rank",
+          "result": "20 scored candidates; artist penalty 0.8"
+        },
+        {
+          "step": "audit",
+          "result": "IDs, records, scores, penalties, and explanations verified"
+        },
+        {
+          "step": "refuse",
+          "result": "The catalog does not contain a sufficiently supported match. Try different preferences."
+        }
+      ]
+    }
+  },
+  {
+    "case": "invalid energy",
+    "request": {
+      "genre": "pop",
+      "mood": "happy",
+      "energy": 5
+    },
+    "expected_status": "refused",
+    "passed": true,
+    "result": {
+      "status": "refused",
+      "message": "target energy must be a number between 0 and 1",
+      "recommendations": [],
+      "trace": [
+        {
+          "step": "refuse",
+          "result": "target energy must be a number between 0 and 1"
+        }
+      ]
+    }
+  },
+  {
+    "case": "unknown field",
+    "request": {
+      "genre": "pop",
+      "mood": "happy",
+      "energy": 0.8,
+      "ignore_rules": true
+    },
+    "expected_status": "refused",
+    "passed": true,
+    "result": {
+      "status": "refused",
+      "message": "Unsupported request fields: ignore_rules",
+      "recommendations": [],
+      "trace": [
+        {
+          "step": "refuse",
+          "result": "Unsupported request fields: ignore_rules"
+        }
+      ]
+    }
+  }
+]
