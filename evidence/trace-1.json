@@ -1,0 +1,61 @@
+{
+  "status": "ok",
+  "message": "Rule-based recommendations from the synthetic catalog; support is not a probability of enjoyment.",
+  "recommendations": [
+    {
+      "id": 17,
+      "title": "Weekend Skyline",
+      "artist": "Neon Echo",
+      "genre": "pop",
+      "mood": "happy",
+      "score": 3.99,
+      "base_score": 3.99,
+      "support": 0.9975,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.01 (+0.99)"
+    },
+    {
+      "id": 1,
+      "title": "Sunrise City",
+      "artist": "Neon Echo",
+      "genre": "pop",
+      "mood": "happy",
+      "score": 3.18,
+      "base_score": 3.98,
+      "support": 0.995,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98); repeated artist (-0.80)"
+    },
+    {
+      "id": 5,
+      "title": "Gym Hero",
+      "artist": "Max Pulse",
+      "genre": "pop",
+      "mood": "intense",
+      "score": 2.87,
+      "base_score": 2.87,
+      "support": 0.7175,
+      "explanation": "genre match (+2.00); energy gap 0.13 (+0.87)"
+    }
+  ],
+  "trace": [
+    {
+      "step": "validate",
+      "result": "valid explicit preferences"
+    },
+    {
+      "step": "plan",
+      "result": "score 20 catalog records using genre-first"
+    },
+    {
+      "step": "rank",
+      "result": "20 scored candidates; artist penalty 0.8"
+    },
+    {
+      "step": "audit",
+      "result": "IDs, records, scores, penalties, and explanations verified"
+    },
+    {
+      "step": "filter",
+      "result": "3 results meet support threshold 0.7"
+    }
+  ]
+}
