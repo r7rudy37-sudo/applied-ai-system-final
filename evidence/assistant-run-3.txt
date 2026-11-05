@@ -1,0 +1,51 @@
+$ python -m src.app --request '{"genre": "rock", "mood": "intense", "energy": 0.9}'
+{
+  "status": "ok",
+  "message": "Rule-based recommendations from the synthetic catalog; support is not a probability of enjoyment.",
+  "recommendations": [
+    {
+      "id": 3,
+      "title": "Storm Runner",
+      "artist": "Voltline",
+      "genre": "rock",
+      "mood": "intense",
+      "score": 3.99,
+      "base_score": 3.99,
+      "support": 0.9975,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.01 (+0.99)"
+    },
+    {
+      "id": 15,
+      "title": "After the Storm",
+      "artist": "Voltline",
+      "genre": "rock",
+      "mood": "intense",
+      "score": 3.18,
+      "base_score": 3.98,
+      "support": 0.995,
+      "explanation": "genre match (+2.00); mood match (+1.00); energy gap 0.02 (+0.98); repeated artist (-0.80)"
+    }
+  ],
+  "trace": [
+    {
+      "step": "validate",
+      "result": "valid explicit preferences"
+    },
+    {
+      "step": "plan",
+      "result": "score 20 catalog records using genre-first"
+    },
+    {
+      "step": "rank",
+      "result": "20 scored candidates; artist penalty 0.8"
+    },
+    {
+      "step": "audit",
+      "result": "IDs, records, scores, penalties, and explanations verified"
+    },
+    {
+      "step": "filter",
+      "result": "2 results meet support threshold 0.7"
+    }
+  ]
+}
