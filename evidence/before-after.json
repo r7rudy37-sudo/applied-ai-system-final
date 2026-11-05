@@ -1,0 +1,36 @@
+{
+  "request": {
+    "genre": "metal",
+    "mood": "happy",
+    "energy": 0.8
+  },
+  "baseline": [
+    {
+      "title": "Weekend Skyline",
+      "score": 1.99
+    },
+    {
+      "title": "Sunrise City",
+      "score": 1.98
+    },
+    {
+      "title": "Rooftop Lights",
+      "score": 1.96
+    }
+  ],
+  "extended": {
+    "status": "refused",
+    "message": "No catalog evidence for genre: metal",
+    "recommendations": [],
+    "trace": [
+      {
+        "step": "validate",
+        "result": "valid explicit preferences"
+      },
+      {
+        "step": "refuse",
+        "result": "No catalog evidence for genre: metal"
+      }
+    ]
+  }
+}
