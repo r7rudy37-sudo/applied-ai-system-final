@@ -1,0 +1,9 @@
+PASS | happy pop | ok | 3 recommendations
+PASS | chill lofi | ok | 3 recommendations
+PASS | intense rock | ok | 2 recommendations
+PASS | missing inputs | refused | 0 recommendations
+PASS | unknown genre | refused | 0 recommendations
+PASS | weak combined match | refused | 0 recommendations
+PASS | invalid energy | refused | 0 recommendations
+PASS | unknown field | refused | 0 recommendations
+Summary: 8/8 passed; deterministic replay checked for every case.
