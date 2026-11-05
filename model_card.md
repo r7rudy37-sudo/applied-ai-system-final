@@ -1,32 +1,30 @@
-# Model Card: VibeFinder 1.0
+# Model Card: VibeGuide 1.0
 
-## 1. Model Name
-VibeFinder 1.0, a content-based classroom simulation.
+## Base Project and Intended Use
+This extends AI110 Project 3, Music Recommender Simulation (VibeFinder). The base app scored and ranked 20 fictional songs using explicit genre, mood, and energy preferences. VibeGuide keeps that ranking component and adds an integrated validate-plan-rank-audit-filter workflow. Its intended use is classroom exploration of explainable recommendations and reliability. It is not a trained recommender or a mental-health tool.
 
-## 2. Intended Use and Goal
-Rank a small music catalog for explicit genre, mood, and energy preferences. Use it to understand data, scoring, and ranking. It is not a production recommender, a trained model, or a diagnosis of someone's emotional state. Do not use it to make claims about actual music popularity or personal characteristics.
+## Data and Algorithm
+The catalog has 20 synthetic rows, including ten starter rows and ten AI-generated additions. Each has ID, title, artist, genre, mood, energy, tempo, valence, danceability, and acousticness. The scoring rule uses genre, mood, energy, and optionally acoustic preference. There is no training dataset, private listening history, audio analysis, or external model call. Three strategies alter the weights. The new assistant validates input, checks catalog support, ranks, independently audits output, and refuses weak or unsupported requests. See the architecture source and actual JSON traces.
 
-## 3. How the Model Works / Algorithm Summary
-A genre match and a mood match add points. Energy earns more when the song is closer to the requested energy, whether the target is high or low. The chosen strategy changes the relative weights. The optional acoustic preference has a smaller weight. Each song is scored before ranking; the top K tracks are returned with the actual scoring reasons. A separate artist penalty can trade relevance for variety. Both the functional and OOP interfaces use these same rules.
+## Limitations and Biases
+The catalog is small, fictional, and uneven. Exact genre and mood labels miss synonyms and related styles. The manually chosen weights and 0.70 support threshold can over-favor certain combinations or refuse a request a human could interpret. Artist diversity improves variety but does not establish demographic fairness. The numerical support value is an alignment measure, not a calibrated probability of enjoyment. The audit checks factual consistency with the rules, not whether the rules reflect real musical taste.
 
-## 4. Data
-There are 20 synthetic songs: ten starter rows and ten AI-generated additions. Every row has ID, title, artist, genre, mood, energy, tempo_bpm, valence, danceability, and acousticness. No personal data or external listening histories are used. Counts by genre: {"ambient": 1, "classical": 1, "country": 1, "edm": 1, "folk": 1, "hip-hop": 1, "indie pop": 1, "jazz": 1, "latin": 1, "lofi": 4, "pop": 3, "rnb": 1, "rock": 2, "synthwave": 1}. Artist names, titles, moods and numeric features are fictional illustrative data. Several artists have repeated tracks so variety can be tested.
+## Potential Misuse and Prevention
+Someone could present these synthetic labels as facts about real music, describe the support score as a psychological assessment, or use recommendations to infer sensitive traits. Documentation explicitly identifies the data as synthetic and the scores as rule-based. The application requires explicit preferences, stores no listening history by default, makes no diagnostic claim, and refuses unknown fields. Saved traces are local and should not include real personal data when sharing a public repo. Production use would require consent, data minimization, deletion controls, and human review of inappropriate inferences.
 
-## 5. Strengths
-The rules are deterministic and their contributions are visible. The pop, lofi, and rock profiles select matching genres first. Low-energy users are not penalized merely because they prefer low energy. Inputs such as NaN, infinity, out-of-range numbers, and invalid result counts are rejected. Structured tables show both the score and why it was assigned.
+## Reliability Testing Results
+The saved run passed 42 automated tests, including five output-tampering cases, and 8/8 predefined end-to-end evaluation cases. The three valid profiles returned distinct top genres. Missing preferences, unknown genre, invalid numbers, unexpected fields, and a weak combined match refused with no results. Replaying the same requests gave identical outputs. These are results on the included synthetic test set, not an estimate of real-user accuracy.
 
-## 6. Limitations and Bias
-Twenty fictional tracks do not represent musical taste. Genre matching treats related labels as unrelated and can over-favor an exact label. The ambient/sad/high-energy profile cannot be perfectly satisfied because the catalog lacks that combination. Repeated artists dominate some lists unless the optional diversity penalty is used. A penalty improves artist variety, but does not prove broader fairness. There is no evidence that these hand-assigned attributes predict real enjoyment.
+## What Was Surprising in Testing
+The base scorer can produce a plausible-looking list for an absent genre because other features still add points. The same metal/happy/0.8 input returned songs in the baseline and was refused in the extension. Another useful behavior is that the rock request returns two well-supported songs instead of inventing a third match. A fully correct score can therefore still be an inappropriate answer unless the system checks the request's support.
 
-## 7. Evaluation
-Actual outputs are in README code blocks and evidence/run-1.txt through run-5.txt. All 24 tests passed. Pop first selects Weekend Skyline, lofi selects Library Rain, and rock selects Storm Runner. Pop versus lofi changes genre, mood and energy; pop versus rock keeps high energy but changes genre and mood; lofi versus rock changes low/chill preferences to high/intense ones. These pairwise differences match the scoring rules.
+## Collaboration With AI: Accepted and Revised Suggestions
+Codex wrote the implementation and documentation and executed the saved tests in response to the user's coursework request. This is AI-assisted work; no independent human listening study or manual review is claimed. AI helped turn the rubric into a modular workflow, add invalid-input tests and fault injection, and format reproducible evidence.
 
-The weight-shift experiment uses one unchanged conflicting profile: ambient/sad/0.95. Genre-first selects Spacewalk Thoughts; energy-first selects Electric Horizon. This is an instructive result: changing weights changes what 'best' means without changing any song. Artist penalty 2 moves another artist ahead of a second Neon Echo track. This measures rule behavior, not recommendation accuracy against real listener labels.
+One accepted design was to validate against actual catalog labels and audit the exact scoring explanation before release. An alternative that was not used as written was a free-text/LLM intent parser: this version requires an explicit JSON preference object. That revision makes unsupported inputs visible and reproducible without an API key or a paid model. Another correction during testing renamed a pytest parameter from the reserved name request to payload; the tests were then rerun successfully. The implementation also filters support before rounding so a display rounding change cannot admit a below-threshold match.
 
-## 8. Future Work
-Collect consented preference feedback and evaluate against held-out choices. Support multiple genre and mood labels. Compare diversity and relevance metrics on a larger, less imbalanced catalog.
+## Future Improvements
+Evaluate on consented, held-out preference judgments from real people. Add validated multi-label genres and synonyms while measuring coverage and false refusals. Calibrate support thresholds against an independent evaluation set rather than intuition. Expand the catalog and report diversity/relevance trade-offs. Preserve human review for musical suitability; deterministic tests alone are insufficient.
 
-## 9. Engineering Reflection and AI Collaboration
-This submission was generated and tested with Codex assistance. The main learning point is the separation of data features, user preferences, scoring, and ranking. A simple weighted rule can look personalized while still missing important musical context. AI supplied implementation and tests; the saved arithmetic and test outputs are the evidence used to check correctness.
-
-One accepted design suggestion was to use closeness to target energy, rather than give every high-energy song more points. One alternative not accepted as written was adding a web interface and additional data libraries: this version uses a CLI and Python's csv module so the whole path stays small. This describes the implementation decisions made during AI-assisted work; it does not claim a human completed independent experiments or listened to the fictional tracks. A useful next extension is an integrated reliability layer that refuses unsupported requests and audits the output.
+## Engineering Reflection
+The central design lesson is that producing an answer and deciding whether the answer is supported are different tasks. The project makes that difference visible through separate ranking, auditing, and refusal decisions. The next extension should measure whether those decisions improve outcomes for real listeners, while avoiding unnecessary collection of personal information.
