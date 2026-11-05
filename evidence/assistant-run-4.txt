@@ -1,0 +1,16 @@
+$ python -m src.app --request '{"genre": "metal", "mood": "happy", "energy": 0.8}'
+{
+  "status": "refused",
+  "message": "No catalog evidence for genre: metal",
+  "recommendations": [],
+  "trace": [
+    {
+      "step": "validate",
+      "result": "valid explicit preferences"
+    },
+    {
+      "step": "refuse",
+      "result": "No catalog evidence for genre: metal"
+    }
+  ]
+}
